@@ -93,7 +93,7 @@
 ## **Ссылка на Jupyter Notebook**
 
 Для детальной реализации аналитики и дашборда обратитесь к файлу:
-[Хакатон_задание_дашборд.ipynb](./notebooks/Hackathon_dashboard.ipynb)
+[Хакатон_задание_дашборд.ipynb](../notebooks/Hackathon_dashboard.ipynb)
 
 
 

@@ -1,133 +1,189 @@
-from typing import List, Dict
+from typing import List
+
 import evaluate
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from ragas import evaluate as ragas_evaluate
-from ragas.metrics import answer_correctness, answer_relevancy, context_precision as ragas_context_precision, context_recall as ragas_context_recall
 
-class Validator:
+rouge = evaluate.load("rouge")
+bleu = evaluate.load("bleu")
+chrf = evaluate.load("chrf")
+bertscore = evaluate.load("bertscore")
+
+
+def context_recall(ground_truth: str, contexts: List[str])->float:
     """
-    A class for evaluating quality metrics for datasets, including context recall,
-    context precision, and answer correctness using both literal and neural approaches.
-    Supports Ragas-based evaluation as well.
+    Calc rouge btw contexts and ground truth.
+    Interpretation: ngram match (recall) btw contexts and desired answer.
+
+    ROUGE - https://huggingface.co/spaces/evaluate-metric/rouge
+
+    return: average rouge for all contexts.
+    """
+    rs = []
+    for c in contexts:
+        rs.append(
+            rouge.compute(
+                predictions=[str(c)],
+                references=[str(ground_truth)],
+            )["rouge2"]
+        )
+
+    return np.mean(rs)
+
+
+def context_precision(ground_truth: str, contexts: List[str])->float:
+    """
+    Calc blue btw contexts and ground truth.
+    Interpretation: ngram match (precision) btw contexts and desired answer.
+
+    BLEU - https://aclanthology.org/P02-1040.pdf
+    max_order - max n-grams to count
+
+    return: average bleu (precision2, w/o brevity penalty) for all contexts.
+    """
+    bs = []
+    for c in contexts:
+
+        try:
+            bs.append(
+                bleu.compute(
+                    predictions=[str(c)],
+                    references=[str(ground_truth)],
+                    max_order=2,
+                )["precisions"][1]
+            )
+        except ZeroDivisionError:
+            bs.append(0)
+
+    return np.mean(bs)
+
+
+def answer_correctness_literal(
+    ground_truth: str,
+    answer: str,
+    char_order: int = 6,
+    word_order: int = 2,
+    beta: float = 1,
+)->float:
+    """
+    Calc chrF btw answer and ground truth.
+    Interpretation: lingustic match btw answer and desired answer.
+
+    chrF - https://aclanthology.org/W15-3049.pdf
+    char_order - n-gram length for chars, default is 6 (from the article)
+    word_order - n-gram length for words (chrF++), default is 2 (as it outperforms simple chrF)
+    beta - recall weight, beta=1 - simple F1-score
+
+    return: chrF for answ and gt.
     """
 
-    def __init__(self, neural: bool = False):
+    score = chrf.compute(
+        predictions=[str(answer)],
+        references=[str(ground_truth)],
+        word_order=word_order,
+        char_order=char_order,
+        beta=beta,
+    )["score"]
+
+    return score
+
+
+def answer_correctness_neural(
+    ground_truth: str,
+    answer: str,
+    model_type: str = "cointegrated/rut5-base",
+)->float:
+    """
+    Calc bertscore btw answer and ground truth.
+    Interpretation: semantic cimilarity btw answer and desired answer.
+
+    BertScore - https://arxiv.org/pdf/1904.09675.pdf
+    model_type - embeds model  (default t5 as the best from my own research and experience)
+
+    return: bertscore-f1 for answ and gt.
+    """
+
+    score = bertscore.compute(
+        predictions=[str(answer)],
+        references=[str(ground_truth)],
+        batch_size=1,
+        model_type=model_type,
+        num_layers=11,
+    )["f1"]
+
+    return score
+
+
+class ValidatorSimple:
+    """
+    Расчет простых метрик качества для заданного датасета.
+    """
+    def __init__(
+        self,
+        neural: bool = False,
+    ):
         """
-        Initialize the Validator class.
-
-        :param neural: Whether to use neural-based evaluation (BERTScore). Default is False.
+        param neural: есть гпу или нет. По дефолту ее нет(
         """
         self.neural = neural
-        self.rouge = evaluate.load("rouge")
-        self.bleu = evaluate.load("bleu")
-        self.chrf = evaluate.load("chrf")
-        self.bertscore = evaluate.load("bertscore") if neural else None
 
-    def context_recall(self, ground_truth: str, contexts: List[str]) -> float:
-        """Calculate ROUGE-2 recall between contexts and ground truth."""
-        try:
-            scores = [
-                self.rouge.compute(predictions=[str(c)], references=[ground_truth])["rouge2"]
-                for c in contexts
+    def score_sample(
+        self,
+        answer: str,
+        ground_truth: str,
+        context: List[str],
+    ):
+        """
+        Расчет для конкретного сэмпла в тестовом датасете.
+        """
+        scores = {}
+        scores["context_recall"] = [
+            context_recall(
+                ground_truth,
+                context,
+            )
+        ]
+        scores["context_precision"] = [
+            context_precision(
+                ground_truth,
+                context,
+            )
+        ]
+        scores["answer_correctness_literal"] = [
+            answer_correctness_literal(
+                ground_truth=ground_truth,
+                answer=answer,
+            )
+        ]
+        if self.neural:
+            scores["answer_correctness_neural"] = [
+                answer_correctness_neural(
+                    ground_truth=ground_truth,
+                    answer=answer,
+                )
             ]
-            return np.mean(scores) if scores else 0.0
-        except Exception as e:
-            print(f"Ошибка в подсчете context_recall: {e}")
-            return 0.0
+        return scores
 
-    def context_precision(self, ground_truth: str, contexts: List[str]) -> float:
-        """Calculate BLEU precision between contexts and ground truth."""
-        scores = []
-        for c in contexts:
-            try:
-                result = self.bleu.compute(
-                    predictions=[str(c)], references=[ground_truth], max_order=2
-                )
-                scores.append(result["precisions"][1])
-            except (ZeroDivisionError, IndexError):
-                scores.append(0.0)
-            except Exception as e:
-                print(f"Ошибка в подсчете context_precision: {e}")
-        return np.mean(scores) if scores else 0.0
-
-    def answer_correctness_literal(self, ground_truth: str, answer: str, char_order: int = 6, word_order: int = 2, beta: float = 1) -> float:
-        """Calculate chrF score between answer and ground truth."""
-        try:
-            score = self.chrf.compute(
-                predictions=[answer],
-                references=[ground_truth],
-                char_order=char_order,
-                word_order=word_order,
-                beta=beta,
-            )["score"]
-            return score
-        except Exception as e:
-            print(f"Ошибка в подсчете answer_correctness_literal: {e}")
-            return 0.0
-
-    def answer_correctness_neural(self, ground_truth: str, answer: str, model_type: str = "cointegrated/rut5-base") -> float:
-        """Calculate BERTScore F1 between answer and ground truth."""
-        if not self.neural or not self.bertscore:
-            return 0.0
-
-        try:
-            score = self.bertscore.compute(
-                predictions=[answer],
-                references=[ground_truth],
-                model_type=model_type,
-                batch_size=1,
-                num_layers=11,
-            )["f1"][0]
-            return score
-        except Exception as e:
-            print(f"Ошибка в подсчете answer_correctness_neural: {e}")
-            return 0.0
-
-    def score_sample(self, answer: str, ground_truth: str, context: List[str]) -> Dict[str, float]:
-        """Calculate all metrics for a given sample."""
-        return {
-            "context_recall": self.context_recall(ground_truth, context),
-            "context_precision": self.context_precision(ground_truth, context),
-            "answer_correctness_literal": self.answer_correctness_literal(ground_truth, answer),
-            "answer_correctness_neural": self.answer_correctness_neural(ground_truth, answer) if self.neural else 0.0,
-        }
-
-    def validate_dataset(self, dataset: pd.DataFrame, use_ragas: bool = False) -> Dict[str, float]:
+    def validate_rag(
+        self,
+        test_set: pd.DataFrame,
+    ):
         """
-        Validate the dataset and return average scores for all metrics.
-
-        :param dataset: DataFrame with columns: 'answer', 'ground_truth', 'contexts'
-        :param use_ragas: Whether to use Ragas metrics for evaluation.
-        :return: Dictionary of average metric scores.
+        param test_set: пандас датасет с нужными полями: answer, ground_truth, context, question
         """
-        if use_ragas:
-            try:
-                score = ragas_evaluate(
-                    dataset,
-                    metrics=[
-                        answer_correctness,
-                        answer_relevancy,
-                        ragas_context_recall,
-                        ragas_context_precision,
-                    ]
-                )
-                return score
-            except Exception as e:
-                print(f"Ошибка в подсчете оценок с помощью Ragas: {e}")
-                return {}
 
-        results = {"context_recall": [], "context_precision": [], "answer_correctness_literal": [], "answer_correctness_neural": []}
-
-        for _, row in tqdm(dataset.iterrows(), total=len(dataset), desc="Evaluating"):
-            try:
-                scores = self.score_sample(row["answer"], row["ground_truth"], row["contexts"])
-                for key, value in scores.items():
-                    results[key].append(value)
-            except KeyError as e:
-                print(f"В тестовом датасете нет нужной строки: {e}")
-            except Exception as e:
-                print(f"В тестовом датасете нет что-то со строкой: {e}")
-
-        return {key: np.mean(values) if values else 0.0 for key, values in results.items()}
+        res = {}
+        for _, row in tqdm(test_set.iterrows(), "score_sample"):
+            gt = row.ground_truth
+            answer = row.answer
+            context = row.contexts
+            scores = self.score_sample(answer, gt, context)
+            if not res:
+                res = scores
+            else:
+                for k, v in scores.items():
+                    res[k].extend(v)
+        for k, v in res.items():
+            res[k] = np.mean(res[k])
+        return res

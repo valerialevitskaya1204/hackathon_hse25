@@ -6,3 +6,4 @@ nltk
 langchain
 langchain-community
 langchain-huggingface
+chromadb

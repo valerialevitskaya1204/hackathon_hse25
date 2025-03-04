@@ -1,0 +1,8 @@
+evaluate
+numpy
+pandas
+tqdm
+nltk
+langchain
+langchain-community
+langchain-huggingface

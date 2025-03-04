@@ -10,6 +10,7 @@ PAGES_INCLUDED = [HomePage, AnalyticsPage]
 analyzer = Analyzer()
 analyzer.load('path.json')
 
-
+st.set_page_config(page_title="Your App Title", page_icon="🚀", layout="wide", initial_sidebar_state="expanded")
+alt.themes.enable('dark')
 page = st.navigation([page().page(analyzer=analyzer) for page in PAGES_INCLUDED], expanded=True)
 page.run()

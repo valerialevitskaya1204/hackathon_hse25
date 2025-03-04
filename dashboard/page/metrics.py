@@ -23,6 +23,8 @@ class MetricsPage(Page):
             if(qgroup == "Все"):
                 qgroup = None
 
+            st.markdown(f'{region} {qgroup}')
+
         params = {
             'region': region,
             'question_group': qgroup,

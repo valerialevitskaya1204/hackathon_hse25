@@ -46,7 +46,7 @@ def make_donut(input_response, input_text, input_color):
     return plot_bg + plot + text
 
 
-def make_pie(labels, values, colors=None, pull=None, hole=0):
+def make_pie(labels, values, colors=None, pull=None, hole=0, alternativeColorScheme=False):
     
     fig = go.Figure(data=[go.Pie(
         labels=labels,
@@ -55,7 +55,7 @@ def make_pie(labels, values, colors=None, pull=None, hole=0):
         textinfo='percent+label',
         textposition='inside',
         insidetextorientation='radial',
-        marker_colors=colors or px.colors.qualitative.Plotly,
+        marker_colors=colors or (px.colors.qualitative.Plotly if not alternativeColorScheme else px.colors.qualitative.Plotly_r),
         pull=pull,
         textfont={'size': 35},
     )])

@@ -1,6 +1,7 @@
 import streamlit as st
 
 class Page:
+    """Base class for all pages"""
     url: str
     title: str
     def render(self, **kwargs):

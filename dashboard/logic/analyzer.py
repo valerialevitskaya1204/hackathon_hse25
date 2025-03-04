@@ -3,6 +3,7 @@ from typing import Callable, Optional
 
 
 class Analyzer:
+    """Data processing class. Loads data and gives metrics"""
 
     data: list
 
@@ -42,11 +43,22 @@ class Analyzer:
     def regions_frequency(self, *, region=None, question_group=None):
         data = self._filter_data(region=region, question_group=question_group)
 
-        return {'Нижний Новгород': 1070 + len(data) * 2,
-                         'Москва': 6025 - len(data * 2),  
+        return {
+            'Нижний Новгород': 1070 + len(data) * 2,
+                     'Москва': 6025 - len(data * 2),  
+        }
+    
+    def question_groups_frequency(self, *, region=None, question_group=None):
+        data = self._filter_data(region=region, question_group=question_group)
+        
+        return {
+            'Закон': 2027,
+            'Внеучебная жизнь': 1800,
         }
 
-    def average_time_and_delta(self):
+    def average_time_and_delta(self, *, region=None, question_group=None):
+        data = self._filter_data(region=region, question_group=question_group)
+
         return 1.5, -0.1
     
     def like_fraction(self, *, region=None, question_group=None):
@@ -54,8 +66,15 @@ class Analyzer:
 
         return 0.8
     
+    def asked_second_time_fraction(self, *, region=None, question_group=None):
+        data = self._filter_data(region=region, question_group=question_group)
+
+        return 0.2
+
+    
     def available_regions(self):
         return ["Москва", "Нижний Новгород"]
     
     def available_question_groups(self):
         return ["Закон", "Внеучебная жизнь"]
+    

@@ -3,3 +3,12 @@ pandas
 plotly
 altair
 matplotlib
+evaluate
+tqdm
+numpy
+nltk
+absl-py
+rouge_score
+sacrebleu
+bert_score
+sentencepiece

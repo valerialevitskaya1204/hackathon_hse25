@@ -173,7 +173,6 @@ class ValidatorSimple:
         """
         param test_set: пандас датасет с нужными полями: answer, ground_truth, context, question
         """
-
         res = {}
         for _, row in tqdm(test_set.iterrows(), "score_sample"):
             gt = row.ground_truth

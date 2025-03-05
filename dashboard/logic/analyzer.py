@@ -49,16 +49,16 @@ class Analyzer:
         return 0.1 + data[1]%2 * 0.1
     
     def regions_frequency(self, **filters: Unpack[FilterParams]):
-        # Dict must be in decreasing order!
+        # Must be in decreasing-by-value order!
         data = self._filter_data(**filters)
 
-        return {
+        return pd.DataFrame(
             'Нижний Новгород': 1070 + len(data) * 2,
                      'Москва': 6025 - len(data * 2),  
-        }
+        )
     
     def question_groups_frequency(self, **filters: Unpack[FilterParams]):
-        # Dict must be in decreasing order!
+        # Dict must be in decreasing-by-value order!
         data = self._filter_data(**filters)
         question_categories = [
             "Деньги",
@@ -101,14 +101,14 @@ class Analyzer:
         
         return 0.2
     
-    def most_frequent_questions(self, **filters: Unpack[FilterParams]):
+    def most_frequent_questions(self, **filters: Unpack[FilterParams]) -> pd.DataFrame:
         # columns=['Вопрос', 'Количество схожих'] !
         data = self._filter_data(**filters)
 
         df = pd.DataFrame([((i+1)*'abc', data.count(i)) for i in data], columns=['Вопрос', 'Количество схожих'])
         return df
     
-    def most_frequent_docs(self, **filters: Unpack[FilterParams]):
+    def most_frequent_docs(self, **filters: Unpack[FilterParams]) -> pd.DataFrame:
         # columns=['Документ', 'Ссылка', 'Количество ссылок'] !
         data = self._filter_data(**filters)
 

@@ -123,5 +123,10 @@ def make_dataframe(df: pd.DataFrame):
     )
     return fig
 
-def make_plot():
-    ...
+def make_time_plot(df, x, metric_name, color=None):
+    fig = px.line(df, x=x, y='date', color=color)
+    fig.update_layout(dict(
+        xaxis_title='Время',
+        yaxis_title=metric_name,
+    ))
+    return fig

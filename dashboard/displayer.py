@@ -1,3 +1,4 @@
+from typing import Callable
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -96,3 +97,16 @@ class Displayer:
             'question_group': qgroup,
             'period': (period_start, period_end),
         }
+    
+    def dynamic(f: Callable, filter: FilterParams = None):
+        if filter == None:
+            filter = FilterParams(period=(datetime.today() - timedelta(days=30), datetime.today()))
+        
+        df = pd.DataFrame()
+        time_start = filter['period'][0]
+        time_end = filter['period'][0] + timedelta(days=1)
+        while time_end <= filter['period'][1]:
+            
+
+            time_start += timedelta(days=1)
+            time_end += timedelta(days=1)

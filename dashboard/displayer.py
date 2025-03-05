@@ -51,12 +51,12 @@ class Displayer:
             st.metric('Время ответа', f'{time} с', f'{delta} с', label_visibility='hidden')
 
     def regions_pie(self, val):
-        freq_dict = val
-        st.plotly_chart(widgets.make_pie(list(freq_dict.keys()), list(freq_dict.values())))
+        freq_s = val
+        st.plotly_chart(widgets.make_pie(freq_s.index, freq_s))
 
     def question_groups_hist(self, val):
-        freq_dict = val
-        st.plotly_chart(widgets.make_pie(list(freq_dict.keys()), list(freq_dict.values()), alternative_color_scheme=True))
+        freq_s = val
+        st.plotly_chart(widgets.make_pie(freq_s.index, freq_s, alternative_color_scheme=True))
 
     def frequent_questions(self, val: pd.DataFrame):
         st.plotly_chart(widgets.make_dataframe(val))

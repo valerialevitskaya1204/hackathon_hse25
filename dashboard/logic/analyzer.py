@@ -48,16 +48,13 @@ class Analyzer:
 
         return 0.1 + data[1]%2 * 0.1
     
-    def regions_frequency(self, **filters: Unpack[FilterParams]):
+    def regions_frequency(self, **filters: Unpack[FilterParams]) -> pd.Series:
         # Must be in decreasing-by-value order!
         data = self._filter_data(**filters)
 
-        return pd.DataFrame(
-            'Нижний Новгород': 1070 + len(data) * 2,
-                     'Москва': 6025 - len(data * 2),  
-        )
+        return pd.Series([1070 + len(data) * 2, 6025 - len(data * 2)], index=['Нижний Новгород', 'Москва']).sort_values(ascending=False)
     
-    def question_groups_frequency(self, **filters: Unpack[FilterParams]):
+    def question_groups_frequency(self, **filters: Unpack[FilterParams]) -> pd.Series:
         # Dict must be in decreasing-by-value order!
         data = self._filter_data(**filters)
         question_categories = [
@@ -83,8 +80,8 @@ class Analyzer:
             "Выпускникам",
             "Другое"
         ]
-        kv = {key: (len(question_categories)-idx)**2+(len(question_categories)-idx)*50 for idx, key in enumerate(question_categories)}
-        return kv
+        values = [(len(question_categories)-idx)**2+(len(question_categories)-idx)*50 for idx, key in enumerate(question_categories)]
+        return pd.Series(values, index=question_categories).sort_values(ascending=False)
 
     def average_time_and_delta(self, **filters: Unpack[FilterParams]):
         data = self._filter_data(**filters)

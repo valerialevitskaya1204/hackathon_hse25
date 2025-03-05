@@ -1,6 +1,4 @@
-from typing import TypedDict, Optional
 from typing_extensions import Unpack
-import datetime
 import pandas as pd
 
 from common import FilterParams
@@ -82,6 +80,11 @@ class Analyzer:
         ]
         values = [(len(question_categories)-idx)**2+(len(question_categories)-idx)*50 for idx, key in enumerate(question_categories)]
         return pd.Series(values, index=question_categories).sort_values(ascending=False)
+
+    def average_time(self, **filters: Unpack[FilterParams]):
+        data = self._filter_data(**filters)
+        
+        return 1.5
 
     def average_time_and_delta(self, **filters: Unpack[FilterParams]):
         data = self._filter_data(**filters)

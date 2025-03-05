@@ -98,7 +98,7 @@ class Displayer:
             'period': (period_start, period_end),
         }
     
-    def dynamic(f: Callable, filter: FilterParams = None):
+    def dynamic(self, f: Callable, filter: FilterParams = None, *, metric_name=None):
         if filter == None:
             filter = FilterParams(period=(datetime.today() - timedelta(days=30), datetime.today()))
         
@@ -106,7 +106,26 @@ class Displayer:
         time_start = filter['period'][0]
         time_end = filter['period'][0] + timedelta(days=1)
         while time_end <= filter['period'][1]:
-            
+            current_filter = filter.copy()
+            current_filter['period'] = (time_start, time_end)
+            res: float | pd.Series = f(**current_filter)
+            if type(res) == pd.Series:
+                new_row = pd.DataFrame({'color': res.index, 'value': res})
+                new_row = new_row.reset_index(drop=True)
+                new_row.index = [time_end] * len(res)
+                if df.empty:
+                    df = new_row
+                    continue
+                df = pd.concat([df, new_row])
+            elif type(res) == float:
+                new_row = pd.DataFrame([res], index=[time_end], columns=['value'])
+                if df.empty:
+                    df = new_row
+                    continue
+                df = pd.concat([df, new_row])
 
+            
             time_start += timedelta(days=1)
             time_end += timedelta(days=1)
+
+        st.plotly_chart(widgets.make_time_plot(df, metric_name, 'color' if 'color' in df.columns else None))

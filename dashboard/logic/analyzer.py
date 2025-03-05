@@ -7,7 +7,6 @@ import numpy as np
 from common import FilterParams
 from .metrics import ValidatorSimple
 
-
 vs = ValidatorSimple(neural = True)
 
 class Analyzer:
@@ -33,7 +32,6 @@ class Analyzer:
         question_group = filters.get('question_group')
         # education = filters.get('education')
         period = filters.get('period')
-
         filt_data = self.data
 
         # if period is None, think it's the last 30 days!
@@ -41,8 +39,6 @@ class Analyzer:
         #     data = self.data[self.data['education_level'] in education]
         if region is not None:
             filt_data = filt_data[filt_data['campus'] in region]
-            
-        
         if question_group is not None:
             filt_data = filt_data[filt_data['question_category'] in question_group]
         if period is not None:
@@ -72,8 +68,7 @@ class Analyzer:
     def regions_frequency(self, **filters: Unpack[FilterParams]):
         # Must be in decreasing-by-value order!
         data = self._filter_data(**filters)
-        unique = pd.unique(data['campus'])
-        return pd.Series([data[data['campus'] == i].count() for i in unique], index=unique)
+        return data['campus'].value_counts()  # Возвращаем количество каждого уникального значения в 'campus' по убыванию
     
     def question_groups_frequency(self, **filters: Unpack[FilterParams]):
         # Dict must be in decreasing-by-value order!

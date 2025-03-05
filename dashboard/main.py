@@ -12,7 +12,7 @@ from page.dynamics import DynamicsPage
 PAGES_INCLUDED = [HomePage, MetricsPage, DynamicsPage]
 
 analyzer = Analyzer()
-analyzer.load('path.json')
+analyzer.load('parsed_dash.json')
 
 st.set_page_config(page_icon='🚀', layout='wide', initial_sidebar_state='expanded')
 alt.theme.enable('dark')

@@ -1,123 +1,96 @@
 from typing_extensions import Unpack
 import pandas as pd
+import numpy as np
 
 from common import FilterParams
+from .metrics import ValidatorSimple
+
+vs = ValidatorSimple(neural = True)
 
 class Analyzer:
     """Data processing class. Loads data and gives metrics"""
-
     data: list
+
+    def preprocessing(self, data):
+        data = data.rename(columns={'user_question': 'question'})
+        data['ground_truth'] = np.where(data['winner'].str.upper() == 'GIGA', data['giga_answer'], data['saiga_answer'])
+        data['answer'] = np.where(data['winner'].str.upper() == 'GIGA', data['saiga_answer'], data['giga_answer'])
+        data['contexts'] = data['contexts'].apply(lambda x: x if len(x) > 0 else [""])
+        data = data[['question', 'answer', 'ground_truth', 'contexts']]
+        return data
+    
+    def load(self, data):
+        data = pd.read_json(data)
+        dataset = self.preprocessing(data)
+        data = pd.concat([data, vs.validate_rag(dataset)], axis=1)
+        self.data = data
 
     def _filter_data(self, **filters: Unpack[FilterParams]) -> list:
         region = filters.get('region')
         question_group = filters.get('question_group')
+        # education = filters.get('education')
         period = filters.get('period')
+        filt_data = self.data
 
         # if period is None, think it's the last 30 days!
-        if region is not None and question_group is not None:
-            return [1, 4, 8, 8]
+        # if education is not None:
+        #     data = self.data[self.data['education_level'] in education]
         if region is not None:
-            return [8, 800, 555, 35, 35]
+            filt_data = filt_data[filt_data['campus'] in region]
         if question_group is not None:
-            return [42, 42, 42]
-        return self.data
-    
-
-    def load(self, f: str):
-        self.data = [0, 1, 2, 3, 4, 5]
+            filt_data = filt_data[filt_data['question_category'] in question_group]
+        if period is not None:
+            start_date, end_date = period
+            filt_data = filt_data[
+                (filt_data['datetime'] >= start_date) & 
+                (filt_data['datetime'] <= end_date)]  
+        
+        return filt_data
 
     def context_recall(self, **filters: Unpack[FilterParams]):
         data = self._filter_data(**filters)
+        return data['context_recall'].mean()  # Среднее значение по столбцу 'context_recall'
 
-        return 0.3 + len(data) * 0.1
-    
     def context_precision(self, **filters: Unpack[FilterParams]):
         data = self._filter_data(**filters)
+        return data['context_precision'].mean()  # Среднее значение по столбцу 'context_precision'
 
-        return 0.43 - len(data) * 0.02
-    
     def answer_correctness_literal(self, **filters: Unpack[FilterParams]):
         data = self._filter_data(**filters)
+        return data['answer_correctness_literal'].mean()  # Среднее значение по столбцу 'answer_correctness_literal'
 
-        return 0.23 + 0.01 * data[0]
-    
     def answer_correctness_neural(self, **filters: Unpack[FilterParams]):
         data = self._filter_data(**filters)
-
-        return 0.1 + data[1]%2 * 0.1
+        return data['answer_correctness_neural'].mean()  # Среднее значение по столбцу 'answer_correctness_neural'
     
-    def regions_frequency(self, **filters: Unpack[FilterParams]) -> pd.Series:
+    def regions_frequency(self, **filters: Unpack[FilterParams]):
         # Must be in decreasing-by-value order!
         data = self._filter_data(**filters)
-
-        return pd.Series([1070 + len(data) * 2, 6025 - len(data * 2)], index=['Нижний Новгород', 'Москва']).sort_values(ascending=False)
+        return data['campus'].value_counts()  # Возвращаем количество каждого уникального значения в 'campus' по убыванию
     
-    def question_groups_frequency(self, **filters: Unpack[FilterParams]) -> pd.Series:
+    def question_groups_frequency(self, **filters: Unpack[FilterParams]):
         # Dict must be in decreasing-by-value order!
         data = self._filter_data(**filters)
-        question_categories = [
-            "Деньги",
-            "Учебный процесс",
-            "Практическая подготовка",
-            "ГИА",
-            "Траектории обучения",
-            "Английский язык",
-            "Цифровые компетенции",
-            "Перемещения студентов / Изменения статусов студентов",
-            "Онлайн-обучение",
-            "Цифровые системы",
-            "Обратная связь",
-            "Дополнительное образование",
-            "Безопасность",
-            "Наука",
-            "Социальные вопросы",
-            "ВУЦ",
-            "Общежития",
-            "ОВЗ",
-            "Внеучебка",
-            "Выпускникам",
-            "Другое"
-        ]
-        values = [(len(question_categories)-idx)**2+(len(question_categories)-idx)*50 for idx, key in enumerate(question_categories)]
-        return pd.Series(values, index=question_categories).sort_values(ascending=False)
+        return data['question_category'].value_counts().to_dict()
 
-    def average_time(self, **filters: Unpack[FilterParams]):
-        data = self._filter_data(**filters)
-        
-        return 1.5
-
-    def average_time_and_delta(self, **filters: Unpack[FilterParams]):
-        data = self._filter_data(**filters)
-
-        return 1.5, -0.1
-    
-    def like_fraction(self, **filters: Unpack[FilterParams]):
-        data = self._filter_data(**filters)
-
-        return 0.8
-    
-    def asked_second_time_fraction(self, **filters: Unpack[FilterParams]):
-        data = self._filter_data(**filters)
-        
-        return 0.2
-    
     def most_frequent_questions(self, **filters: Unpack[FilterParams]) -> pd.DataFrame:
         # columns=['Вопрос', 'Количество схожих'] !
         data = self._filter_data(**filters)
-
-        df = pd.DataFrame([((i+1)*'abc', data.count(i)) for i in data], columns=['Вопрос', 'Количество схожих'])
-        return df
+        return data['question'].value_counts().to_dict()
     
     def most_frequent_docs(self, **filters: Unpack[FilterParams]) -> pd.DataFrame:
         # columns=['Документ', 'Ссылка', 'Количество ссылок'] !
         data = self._filter_data(**filters)
-
-        df = pd.DataFrame([((i+1)*'abc', 'http://zhopa', data.count(i)) for i in data], columns=['Документ', 'Ссылка', 'Количество ссылок'])
-        return df
+        return data['contexts'].value_counts().to_dict()
+        
+    def average_time_and_delta(self, **filters: Unpack[FilterParams]):
+        data = self._filter_data(**filters)
+        return 1.5, -0.1
     
-    def available_regions(self):
-        return ['Москва', 'Нижний Новгород']
+    def like_fraction(self, **filters: Unpack[FilterParams]):
+        data = self._filter_data(**filters)
+        return 0.8
     
-    def available_question_groups(self):
-        return ['Закон', 'Внеучебная жизнь']
-    
+    def asked_second_time_fraction(self, **filters: Unpack[FilterParams]):
+        data = self._filter_data(**filters)
+        return 0.2

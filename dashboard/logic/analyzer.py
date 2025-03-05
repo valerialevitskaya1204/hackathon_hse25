@@ -3,10 +3,7 @@ from typing_extensions import Unpack
 import datetime
 import pandas as pd
 
-class FilterParams(TypedDict):
-    region: Optional[str]
-    question_group: Optional[str]
-    period: Optional[tuple[datetime.date, datetime.date]]
+from common import FilterParams
 
 class Analyzer:
     """Data processing class. Loads data and gives metrics"""
@@ -110,10 +107,17 @@ class Analyzer:
 
         df = pd.DataFrame([((i+1)*'abc', data.count(i)) for i in data], columns=['Вопрос', 'Количество схожих'])
         return df
+    
+    def most_frequent_docs(self, **filters: Unpack[FilterParams]):
+        # columns=['Документ', 'Ссылка', 'Количество ссылок'] !
+        data = self._filter_data(**filters)
 
+        df = pd.DataFrame([((i+1)*'abc', 'http://zhopa', data.count(i)) for i in data], columns=['Документ', 'Ссылка', 'Количество ссылок'])
+        return df
+    
     def available_regions(self):
-        return ["Москва", "Нижний Новгород"]
+        return ['Москва', 'Нижний Новгород']
     
     def available_question_groups(self):
-        return ["Закон", "Внеучебная жизнь"]
+        return ['Закон', 'Внеучебная жизнь']
     

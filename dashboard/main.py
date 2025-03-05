@@ -6,9 +6,10 @@ import styles
 from page.home import HomePage
 from page.metrics import MetricsPage
 from logic.analyzer import Analyzer
+from page.dynamics import DynamicsPage
 
 
-PAGES_INCLUDED = [HomePage, MetricsPage]
+PAGES_INCLUDED = [HomePage, MetricsPage, DynamicsPage]
 
 analyzer = Analyzer()
 analyzer.load('path.json')

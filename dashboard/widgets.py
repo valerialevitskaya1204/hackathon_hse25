@@ -14,17 +14,17 @@ def make_donut(input_response, input_text, input_color):
         chart_color = ['#E74C3C', '#781F16']
 
     source = pd.DataFrame({
-        "Topic": ['', input_text],
-        "% процентов": [100-input_response, input_response]
+        'Topic': ['', input_text],
+        '% процентов': [100-input_response, input_response]
     })
     source_bg = pd.DataFrame({
-        "Topic": ['', input_text],
-        "% процентов": [100, 0]
+        'Topic': ['', input_text],
+        '% процентов': [100, 0]
     })
 
     plot = alt.Chart(source).mark_arc(innerRadius=45, cornerRadius=25).encode(
-        theta="% процентов",
-        color= alt.Color("Topic:N",
+        theta='% процентов',
+        color= alt.Color('Topic:N',
                         scale=alt.Scale(
                             #domain=['A', 'B'],
                             domain=[input_text, ''],
@@ -33,10 +33,10 @@ def make_donut(input_response, input_text, input_color):
                         legend=None),
     ).properties(width=150, height=150)
 
-    text = plot.mark_text(align='center', color="#29b5e8", font="Arial", fontSize=28, fontWeight=700, fontStyle="italic").encode(text=alt.value(f'{round(input_response)} %'))
+    text = plot.mark_text(align='center', color='#29b5e8', font='Arial', fontSize=28, fontWeight=700, fontStyle='italic').encode(text=alt.value(f'{round(input_response)} %'))
     plot_bg = alt.Chart(source_bg).mark_arc(innerRadius=45, cornerRadius=20).encode(
-        theta="% процентов",
-        color= alt.Color("Topic:N",
+        theta='% процентов',
+        color= alt.Color('Topic:N',
                         scale=alt.Scale(
                             # domain=['A', 'B'],
                             domain=[input_text, ''],
@@ -90,7 +90,7 @@ def make_hist(labels, values, colors=None, alternative_color_scheme=False):
         textfont_size=12,
         marker_line_color='rgb(8,48,107)',
         marker_line_width=1.5,
-        hovertemplate="<b>%{x}</b><br>Количество: %{y}<br>Доля: %{text}<extra></extra>",
+        hovertemplate='<b>%{x}</b><br>Количество: %{y}<br>Доля: %{text}<extra></extra>',
     )
     
     return fig
@@ -122,3 +122,6 @@ def make_dataframe(df: pd.DataFrame):
         margin=dict(l=0, r=0, b=0, t=0)
     )
     return fig
+
+def make_plot():
+    ...

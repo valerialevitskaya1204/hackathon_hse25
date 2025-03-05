@@ -1,30 +1,23 @@
 import streamlit as st
+from datetime import datetime, timedelta
 
 from common import Page
 from logic.analyzer import Analyzer
 from displayer import Displayer
 
 
-class MetricsPage(Page):
-    url = '/metrics'
-    title = 'Метрики'
+class DynamicsPage(Page):
+    url = '/dynamics'
+    title = 'Динамика'
     def render(self, *, analyzer: Analyzer, **_):
         displayer = Displayer()
         with st.sidebar:
             st.markdown('### Фильтры')
             params = displayer.filters(available_regions=analyzer.available_regions(), available_question_groups=analyzer.available_question_groups())
 
-        st.markdown(f'# Метрики с {params['period'][0].strftime('%d.%m.%Y')} по {params['period'][1].strftime('%d.%m.%Y')}')
+        st.markdown(f'# {params['period'][0].strftime('%d.%m.%Y')} — {params['period'][1].strftime('%d.%m.%Y')}')
         with st.expander('Ключевые', expanded=True):
-            cols = st.columns((1, 1, 1, 1))
-            with cols[0]:
-                displayer.answer_correctness_neural(analyzer.answer_correctness_neural(**params))
-            with cols[1]:
-                displayer.answer_correctness_literal(analyzer.answer_correctness_literal(**params))
-            with cols[2]:
-                displayer.context_precision(analyzer.context_precision(**params))
-            with cols[3]:
-                displayer.context_recall(analyzer.context_recall(**params))
+            ...
         
         with st.expander('Пользовательские'):
             cols = st.columns((1, 1, 1, 1))
@@ -40,9 +33,3 @@ class MetricsPage(Page):
 
         with st.expander('Статистика по теме вопроса'):
             displayer.question_groups_hist(analyzer.question_groups_frequency(**params))
-
-        with st.expander('Наиболее частые вопросы'):
-            displayer.frequent_questions(analyzer.most_frequent_questions(**params))
-
-        with st.expander('Статистика по документам'):
-            displayer.frequent_docs(analyzer.most_frequent_docs(**params))

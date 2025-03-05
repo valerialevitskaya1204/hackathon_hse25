@@ -17,6 +17,7 @@ class Analyzer:
         question_group = filters.get('question_group')
         period = filters.get('period')
 
+        # if period is None, think it's the last 30 days!
         if region is not None and question_group is not None:
             return [1, 4, 8, 8]
         if region is not None:

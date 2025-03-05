@@ -1,11 +1,12 @@
 from typing import TypedDict, Optional
 from typing_extensions import Unpack
 import datetime
+import pandas as pd
 
 class FilterParams(TypedDict):
     region: Optional[str]
     question_group: Optional[str]
-    period: Optional[tuple[datetime.datetime, datetime.datetime]]
+    period: Optional[tuple[datetime.date, datetime.date]]
 
 class Analyzer:
     """Data processing class. Loads data and gives metrics"""
@@ -51,6 +52,7 @@ class Analyzer:
         return 0.1 + data[1]%2 * 0.1
     
     def regions_frequency(self, **filters: Unpack[FilterParams]):
+        # Dict must be in decreasing order!
         data = self._filter_data(**filters)
 
         return {
@@ -59,12 +61,33 @@ class Analyzer:
         }
     
     def question_groups_frequency(self, **filters: Unpack[FilterParams]):
+        # Dict must be in decreasing order!
         data = self._filter_data(**filters)
-        
-        return {
-                       'Закон': 2027,
-            'Внеучебная жизнь': 1800,
-        }
+        question_categories = [
+            "Деньги",
+            "Учебный процесс",
+            "Практическая подготовка",
+            "ГИА",
+            "Траектории обучения",
+            "Английский язык",
+            "Цифровые компетенции",
+            "Перемещения студентов / Изменения статусов студентов",
+            "Онлайн-обучение",
+            "Цифровые системы",
+            "Обратная связь",
+            "Дополнительное образование",
+            "Безопасность",
+            "Наука",
+            "Социальные вопросы",
+            "ВУЦ",
+            "Общежития",
+            "ОВЗ",
+            "Внеучебка",
+            "Выпускникам",
+            "Другое"
+        ]
+        kv = {key: (len(question_categories)-idx)**2+(len(question_categories)-idx)*50 for idx, key in enumerate(question_categories)}
+        return kv
 
     def average_time_and_delta(self, **filters: Unpack[FilterParams]):
         data = self._filter_data(**filters)
@@ -80,8 +103,14 @@ class Analyzer:
         data = self._filter_data(**filters)
         
         return 0.2
-
     
+    def most_frequent_questions(self, **filters: Unpack[FilterParams]):
+        # columns=['Вопрос', 'Количество схожих'] !
+        data = self._filter_data(**filters)
+
+        df = pd.DataFrame([((i+1)*'abc', data.count(i)) for i in data], columns=['Вопрос', 'Количество схожих'])
+        return df
+
     def available_regions(self):
         return ["Москва", "Нижний Новгород"]
     

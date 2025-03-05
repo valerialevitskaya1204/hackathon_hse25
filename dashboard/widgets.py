@@ -46,7 +46,7 @@ def make_donut(input_response, input_text, input_color):
     return plot_bg + plot + text
 
 
-def make_pie(labels, values, colors=None, pull=None, hole=0, alternativeColorScheme=False):
+def make_pie(labels, values, *, colors=None, pull=None, hole=0, alternative_color_scheme=False):
     
     fig = go.Figure(data=[go.Pie(
         labels=labels,
@@ -55,15 +55,45 @@ def make_pie(labels, values, colors=None, pull=None, hole=0, alternativeColorSch
         textinfo='percent+label',
         textposition='inside',
         insidetextorientation='radial',
-        marker_colors=colors or (px.colors.qualitative.Plotly if not alternativeColorScheme else px.colors.qualitative.Plotly_r),
+        marker_colors=colors or (px.colors.qualitative.Plotly if not alternative_color_scheme else px.colors.qualitative.Vivid),
         pull=pull,
         textfont={'size': 35},
     )])
-    fig.update_layout(margin=dict(t=0))
-    
-    
+    fig.update_layout(margin=dict(t=0))    
     return fig
 
+def make_hist(labels, values, colors=None, alternative_color_scheme=False):
+    total = sum(values)
+    percentages = [(v / total) * 100 for v in values] if total != 0 else [0]*len(values)
+    fig = px.bar(
+        x=labels,
+        y=values,
+        color=labels if colors is None else None,
+        color_discrete_sequence=colors or (
+            px.colors.qualitative.Plotly if not alternative_color_scheme else px.colors.qualitative.Vivid
+        ),
+        text=[f'{p:.1f}%' for p in percentages],
+        labels={'x': '', 'y': ''},
+    )
+    fig.update_layout(
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis={'categoryorder': 'total descending'},
+        uniformtext_minsize=8,
+        uniformtext_mode='hide',
+        margin=dict(t=30, b=0),
+        yaxis_range=[0, max(values) + max(max(values)*0.1, 10)],
+    )
+    
+    fig.update_traces(
+        textposition='outside',
+        textfont_size=12,
+        marker_line_color='rgb(8,48,107)',
+        marker_line_width=1.5,
+        hovertemplate="<b>%{x}</b><br>Количество: %{y}<br>Доля: %{text}<extra></extra>",
+    )
+    
+    return fig
 def choose_color(p1, p2, val, *, reverse=False) -> str:
     colors = ['red', 'orange', 'green']
     if(val < p1):
@@ -74,3 +104,21 @@ def choose_color(p1, p2, val, *, reverse=False) -> str:
         idx = 2
 
     return colors[idx] if not reverse else colors[-idx-1]
+
+def make_dataframe(df: pd.DataFrame):
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=list(df.columns),
+                    align='left',
+                    font_size=25,
+                    height=40),
+        cells=dict(values=df.transpose().values.tolist(),
+                align='left',
+                font_size=25,
+                height=50,
+                line_width=1,))
+    ])
+    fig.update_layout(
+        autosize=True,
+        margin=dict(l=0, r=0, b=0, t=0)
+    )
+    return fig

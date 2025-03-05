@@ -9,7 +9,7 @@ class HomePage(Page):
     title = 'Обзор'
     def render(self, *, analyzer: Analyzer, **_):
         metric_displayer = MetricDisplayer()
-        st.markdown('# Обзор')
+        st.markdown('# Обзор за последние 30 дней')
 
         cols = st.columns((1, 0.25, 1), gap='small')
         

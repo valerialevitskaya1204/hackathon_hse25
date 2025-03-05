@@ -49,6 +49,9 @@ class MetricDisplayer:
         freq_dict = val
         st.plotly_chart(widgets.make_pie(list(freq_dict.keys()), list(freq_dict.values())))
 
-    def question_groups_pie(self, val):
+    def question_groups_hist(self, val):
         freq_dict = val
-        st.plotly_chart(widgets.make_pie(list(freq_dict.keys()), list(freq_dict.values()), alternativeColorScheme=True))
+        st.plotly_chart(widgets.make_hist(list(freq_dict.keys()), list(freq_dict.values()), alternative_color_scheme=True))
+
+    def frequent_questions(self, val):
+        st.plotly_chart(widgets.make_dataframe(val))

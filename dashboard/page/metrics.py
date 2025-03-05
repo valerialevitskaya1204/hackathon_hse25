@@ -14,7 +14,7 @@ class MetricsPage(Page):
             st.markdown('### Фильтры')
             params = displayer.filters(available_regions=analyzer.available_regions(), available_question_groups=analyzer.available_question_groups())
 
-        st.markdown(f'# Метрики с {params['period'][0].strftime('%d.%m.%Y')} по {params['period'][1].strftime('%d.%m.%Y')}')
+        st.markdown(f"# Метрики с {params['period'][0].strftime('%d.%m.%Y')} по {params['period'][1].strftime('%d.%m.%Y')}")
         with st.expander('Ключевые', expanded=True):
             cols = st.columns((1, 1, 1, 1))
             with cols[0]:

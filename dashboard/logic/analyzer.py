@@ -4,27 +4,30 @@ import datetime
 import pandas as pd
 
 from common import FilterParams
-from metrics import ValidatorSimple
+from .metrics import ValidatorSimple
+
+
+vs = ValidatorSimple(neural = True)
 
 class Analyzer:
     """Data processing class. Loads data and gives metrics"""
     data: list
-    vs = ValidatorSimple(neural = True)
     def load(self, data):
             self.data = data
 
     def _filter_data(self, **filters: Unpack[FilterParams]) -> list:
         region = filters.get('region')
         question_group = filters.get('question_group')
-        education = filters.get('education')
+        period = filters.get('period')
+        #education = filters.get('education')
 
         # if period is None, think it's the last 30 days!
         if region is not None:
             data = self.data[self.data['campus'] in region]
-        if education is not None:
-            data = self.data[self.data['education_level'] in education]
+        # if education is not None:
+        #     data = self.data[self.data['education_level'] in education]
         if question_group is not None:
-            data = self.data[self.data['question_category'] in question_group]    
+            data = self.data[self.data['question_category'] in question_group]   
         return data
 
     def context_recall(self, **filters: Unpack[FilterParams]):

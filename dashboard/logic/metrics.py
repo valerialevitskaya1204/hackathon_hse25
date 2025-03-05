@@ -165,25 +165,39 @@ class ValidatorSimple:
             ]
         return scores
 
-    def validate_rag(
-        self,
-        test_set: pd.DataFrame,
-        value: str
-    ):
+    def validate_rag(self, test_set: pd.DataFrame):
         """
         param test_set: пандас датасет с нужными полями: answer, ground_truth, context, question
         """
-        res = {}
+        # Создаём пустые списки для метрик
+        context_recall = []
+        context_precision = []
+        answer_correctness_literal = []
+        answer_correctness_neural = []
+
         for _, row in tqdm(test_set.iterrows(), "score_sample"):
             gt = row.ground_truth
             answer = row.answer
             context = row.contexts
+            # Считаем метрики для каждой строки
             scores = self.score_sample(answer, gt, context)
-            if not res:
-                res = scores
-            else:
-                for k, v in scores.items():
-                    res[k].extend(v)
-        for k, v in res.items():
-            res[k] = np.mean(res[k])
-        return res[value]
+
+            # Добавляем результаты в списки
+            context_recall.append(scores['context_recall'])
+            context_precision.append(scores['context_precision'])
+            answer_correctness_literal.append(scores['answer_correctness_literal'])
+
+            if self.neural:
+                answer_correctness_neural.append(scores['answer_correctness_neural'])
+
+        # Создаём DataFrame с метриками для каждой строки
+        result_df = pd.DataFrame({
+            'context_recall': context_recall,
+            'context_precision': context_precision,
+            'answer_correctness_literal': answer_correctness_literal,
+        })
+
+        if self.neural:
+            result_df['answer_correctness_neural'] = answer_correctness_neural
+
+        return result_df
